@@ -1,5 +1,5 @@
 // All-terrain paddle-wheel concept based on the updated sketch. Units: mm.
-// Fixed tooth peaks, recessed short flanks, raised long flanks, sealed tread ring.
+// Fixed forward peaks with smaller opposing teeth on each long flank.
 // Spring, bearing, pin, and clearances are illustrative, not hardware specifications.
 // Springs show compliance; this model does not simulate forces or damping.
 
@@ -16,6 +16,12 @@ lug_sweep = 0.82;
 // Short flank leans inward underneath the fixed tip. Angle in degrees.
 short_flank_backstep = 2;
 rim_inner_diameter = 64;
+
+/* [Reverse teeth] */
+reverse_teeth = true;
+reverse_tooth_height = 3;
+// Location along each main tooth's long flank.
+reverse_tooth_position = 0.52;
 
 /* [Sealed tread cavity] */
 // Thick skins, narrow chambers, solid teeth, and bridges between chambers.
@@ -52,34 +58,56 @@ assert(rim_wall > 0 && cavity_radial_width > 0 && cavity_rib_width > 0);
 assert(spring_length > spring_wire_diameter*spring_turns);
 assert(wheel_width > 16 && hub_r > axle_hole_diameter/2);
 assert(lug_sweep >= 0.5 && lug_sweep <= 0.85);
+assert(reverse_tooth_height > 0);
+assert(reverse_tooth_position >= 0.4 && reverse_tooth_position <= 0.6);
 
 function polar(r,a) = [r*cos(a),r*sin(a)];
 function bezier(p0,p1,p2,p3,t) =
     (1-t)*(1-t)*(1-t)*p0 + 3*(1-t)*(1-t)*t*p1
     + 3*(1-t)*t*t*p2 + t*t*t*p3;
 
-// Keep the original peak coordinates. The short flank tucks underneath
-// each tip, while the long flank rises outward to follow the circular rim.
+// Main peaks stay fixed. Smaller counter-swept teeth sit on the long flanks.
 function tooth_tip(i) = polar(outer_r,(i+lug_sweep)*360/lug_count);
+function main_flank(i,t) = let(a=(i+lug_sweep)*360/lug_count)
+    bezier(polar(root_r,a-short_flank_backstep),
+        polar(outer_r-1,a+0.14*360/lug_count),
+        polar(outer_r,a+0.74*360/lug_count),tooth_tip(i+1),t);
+function point_angle(p) = atan2(p[1],p[0]);
+function paired_tooth_points(i) = let(
+    t=reverse_tooth_position,
+    base=main_flank(i,t),
+    base_a=point_angle(base),
+    base_r=norm(base),
+    reverse_r=min(outer_r-0.8,base_r+reverse_tooth_height),
+    reverse_a=base_a-2,
+    reverse_tip=polar(reverse_r,reverse_a),
+    // Opposite lean: this root lies ahead of the reverse tip, rather than behind.
+    reverse_foot=polar(base_r-1,base_a+1.6),
+    entry=main_flank(i,t-0.22),
+    exit=main_flank(i,t+0.34))
+    concat(
+        [tooth_tip(i),main_flank(i,0)],
+        [for(j=[1:6]) main_flank(i,(t-0.22)*j/6)],
+        // Recessed inward curve leading into the short counter-facing flank.
+        [for(j=[1:7]) bezier(entry,polar(base_r-2,base_a-5),
+            polar(base_r-1.4,base_a+0.7),reverse_foot,j/7)],
+        [reverse_tip],
+        // Long return follows the circumference and curves gently inward.
+        [for(j=[1:12]) bezier(reverse_tip,
+            polar(reverse_r-0.5,reverse_a+6),
+            main_flank(i,t+0.26),exit,j/12)],
+        [for(j=[1:4]) main_flank(i,(t+0.34)+(1-t-0.34)*j/5)]
+    );
 module tread_outline() {
-    pitch = 360/lug_count;
-    polygon([for(i=[0:lug_count-1]) let(
-        a=(i+lug_sweep)*pitch,
-        tip=tooth_tip(i),
-        foot=polar(root_r,a-short_flank_backstep),
-        next_tip=tooth_tip(i+1)) each concat(
-        [tip,foot],
-        [for(j=[1:19]) bezier(
-            foot,
-            polar(outer_r-1,a+0.14*pitch),
-            polar(outer_r,a+0.74*pitch),
-            next_tip,j/20)]
-    )]);
+    polygon([for(i=[0:lug_count-1]) each
+        (reverse_teeth ? paired_tooth_points(i) :
+            concat([tooth_tip(i)],
+                [for(j=[0:19]) main_flank(i,j/20)]))]);
 }
 
 // The cavity is entirely enclosed. Radial bridges create separate chambers.
 module tread_cavity() {
-    translate([0,0,rim_wall]) linear_extrude(wheel_width-2*rim_wall)
+    translate([0,0,rim_wall]) linear_extrude(height=wheel_width-2*rim_wall,convexity=20)
         difference() {
             difference() {
                 intersection() {
@@ -95,7 +123,7 @@ module tread_cavity() {
 }
 
 module solid_rim() {
-    linear_extrude(wheel_width) difference() {
+    linear_extrude(height=wheel_width,convexity=20) difference() {
         tread_outline();
         circle(r=inner_r);
     }
