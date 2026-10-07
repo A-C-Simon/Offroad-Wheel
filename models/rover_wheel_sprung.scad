@@ -1,5 +1,5 @@
 // All-terrain paddle-wheel concept based on the updated sketch. Units: mm.
-// Sharp forward/reverse peaks, circular contact arcs, and rounded inward valleys.
+// Forward teeth extended along their circular arcs; sharp peaks and rounded valleys.
 // Spring, bearing, pin, and clearances are illustrative, not hardware specifications.
 // Springs show compliance; this model does not simulate forces or damping.
 
@@ -11,6 +11,8 @@ axle_hole_diameter = 6;
 lug_count = 12;
 spoke_count = 6;
 lug_height = 11;
+// Additional length measured along the existing forward tooth arc, in mm.
+forward_arc_extension = 4;
 // Position of the paddle tip within each pitch; larger values sweep it back.
 lug_sweep = 0.82;
 // Short flank leans inward underneath the fixed tip. Angle in degrees.
@@ -63,6 +65,7 @@ assert(spring_length > spring_wire_diameter*spring_turns);
 assert(wheel_width > 16 && hub_r > axle_hole_diameter/2);
 assert(lug_sweep >= 0.5 && lug_sweep <= 0.85);
 assert(reverse_tooth_height > 0);
+assert(forward_arc_extension >= 0 && forward_arc_extension <= 6);
 assert(valley_fillet_radius > 0);
 assert(reverse_tooth_position >= 0.4 && reverse_tooth_position <= 0.6);
 
@@ -72,7 +75,7 @@ function bezier(p0,p1,p2,p3,t) =
     + 3*(1-t)*t*t*p2 + t*t*t*p3;
 
 // Sharp peaks define the envelope; only inward valleys receive fillets.
-function tooth_tip(i) = polar(outer_r,(i+lug_sweep)*360/lug_count);
+function nominal_tooth_tip(i) = polar(outer_r,(i+lug_sweep)*360/lug_count);
 // Circular contact arc, tangent to the wheel circumference at the main tip.
 function arc_to_tip(start,tip,t) = let(
     tip_r=norm(tip), unit=tip/tip_r,
@@ -83,7 +86,20 @@ function arc_to_tip(start,tip,t) = let(
     sweep=(end_a-start_a+360)%360)
     center+polar(radius,start_a+sweep*t);
 function main_flank(i,t) = let(a=(i+lug_sweep)*360/lug_count)
-    arc_to_tip(polar(root_r,a-short_flank_backstep),tooth_tip(i+1),t);
+    arc_to_tip(polar(root_r,a-short_flank_backstep),nominal_tooth_tip(i+1),t);
+
+// Arc length is rotationally invariant; extend the same circle past its old tip.
+function forward_arc_length() = let(
+    start=polar(root_r,-short_flank_backstep),
+    tip=polar(outer_r,360/lug_count), unit=tip/outer_r,
+    center=unit*((outer_r*outer_r-start*start)/(2*(outer_r-start*unit))),
+    radius=norm(tip-center),
+    a0=atan2(start[1]-center[1],start[0]-center[0]),
+    a1=atan2(tip[1]-center[1],tip[0]-center[0]))
+    radius*((a1-a0+360)%360)*PI/180;
+function tooth_tip(i) = main_flank(i-1,1+forward_arc_extension/forward_arc_length());
+function extended_arc_tail(i) = [for(j=[0:7])
+    main_flank(i,1+forward_arc_extension/forward_arc_length()*j/8)];
 
 // True circular arc through three points for the small reverse tooth's crown.
 function arc_through(start,middle,end,t) = let(
@@ -122,13 +138,14 @@ function paired_tooth_points(i) = let(
         [reverse_tip],
         // Long return follows the circumference and curves gently inward.
         [for(j=[1:24]) arc_through(reverse_tip,crown,exit,j/24)],
-        [for(j=[1:4]) main_flank(i,(t+0.34)+(1-t-0.34)*j/5)]
+        [for(j=[1:4]) main_flank(i,(t+0.34)+(1-t-0.34)*j/5)],
+        extended_arc_tail(i)
     );
 module raw_tread_outline() {
     polygon([for(i=[0:lug_count-1]) each
         (reverse_teeth ? paired_tooth_points(i) :
             concat([tooth_tip(i)],
-                [for(j=[0:19]) main_flank(i,j/20)]))]);
+                [for(j=[0:19]) main_flank(i,j/20)],extended_arc_tail(i)))]);
 }
 
 // Round only concave valleys. This dilation/erosion fills inward corners
