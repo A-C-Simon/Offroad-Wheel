@@ -2,8 +2,8 @@
 // Dimensions are provisional, in mm; edit them to match your hardware.
 
 /* [Wheel dimensions] */
-outside_diameter = 120;
-wheel_width = 30;
+outside_diameter = 200;
+wheel_width = 150;
 lug_height = outside_diameter * 8/120;
 rim_inner_diameter = outside_diameter * 68/120;
 hub_diameter = outside_diameter * 34/120;
