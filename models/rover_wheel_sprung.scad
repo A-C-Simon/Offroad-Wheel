@@ -1,5 +1,5 @@
 // All-terrain paddle-wheel concept based on the updated sketch. Units: mm.
-// Broad circular tread region, shallow swept teeth, smaller hub, longer springs.
+// Fixed tooth peaks, recessed short flanks, raised long flanks, sealed tread ring.
 // Spring, bearing, pin, and clearances are illustrative, not hardware specifications.
 // Springs show compliance; this model does not simulate forces or damping.
 
@@ -13,6 +13,8 @@ spoke_count = 6;
 lug_height = 11;
 // Position of the paddle tip within each pitch; larger values sweep it back.
 lug_sweep = 0.82;
+// Short flank leans inward underneath the fixed tip. Angle in degrees.
+short_flank_backstep = 2;
 rim_inner_diameter = 64;
 
 /* [Sealed tread cavity] */
@@ -56,21 +58,22 @@ function bezier(p0,p1,p2,p3,t) =
     (1-t)*(1-t)*(1-t)*p0 + 3*(1-t)*(1-t)*t*p1
     + 3*(1-t)*t*t*p2 + t*t*t*p3;
 
-// Gradual curved rise, circumferentially swept tip, and short trailing flank.
-// The paddles remain distinct, rather than smoothing into a circular tread.
+// Keep the original peak coordinates. The short flank tucks underneath
+// each tip, while the long flank rises outward to follow the circular rim.
+function tooth_tip(i) = polar(outer_r,(i+lug_sweep)*360/lug_count);
 module tread_outline() {
     pitch = 360/lug_count;
-    polygon([for(i=[0:lug_count-1]) let(a=i*pitch) each concat(
-        [for(j=[0:16]) bezier(
-            polar(root_r,a),
-            polar(root_r+1,a+0.25*pitch),
-            polar(outer_r-2,a+(lug_sweep-0.20)*pitch),
-            polar(outer_r,a+lug_sweep*pitch),j/16)],
-        [for(j=[1:9]) bezier(
-            polar(outer_r,a+lug_sweep*pitch),
-            polar(outer_r-5,a+(lug_sweep+0.04)*pitch),
-            polar(root_r+1,a+0.98*pitch),
-            polar(root_r,a+pitch),j/10)]
+    polygon([for(i=[0:lug_count-1]) let(
+        a=(i+lug_sweep)*pitch,
+        tip=tooth_tip(i),
+        foot=polar(root_r,a-short_flank_backstep),
+        next_tip=tooth_tip(i+1)) each concat(
+        [tip,foot],
+        [for(j=[1:19]) bezier(
+            foot,
+            polar(outer_r-1,a+0.14*pitch),
+            polar(outer_r,a+0.74*pitch),
+            next_tip,j/20)]
     )]);
 }
 
