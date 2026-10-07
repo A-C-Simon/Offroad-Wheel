@@ -14,8 +14,7 @@ rim_inner_diameter = 88;
 
 /* [Sealed tread cavity] */
 // Thick skins, narrow chambers, solid teeth, and bridges between chambers.
-rim_wall = 2;
-rim_cutaway = true;
+rim_wall = 3;
 cavity_radial_width = 2;
 cavity_rib_width = 2;
 cavity_rib_count = 8;
@@ -41,7 +40,7 @@ spring_end = inner_r-4;
 pivot_r = inner_r-1;
 spring_length = spring_end-spring_start;
 
-assert(root_r > inner_r+2*rim_wall);
+assert(root_r > inner_r+rim_wall+cavity_radial_width);
 assert(wheel_width > 2*rim_wall);
 assert(rim_wall > 0 && cavity_radial_width > 0 && cavity_rib_width > 0);
 assert(spring_length > spring_wire_diameter*spring_turns);
@@ -54,23 +53,34 @@ module tread_outline() {
          polar(outer_r,(i+0.16)*360/lug_count)]]);
 }
 
+// The cavity is entirely enclosed. Radial bridges create separate chambers.
+module tread_cavity() {
+    translate([0,0,rim_wall]) linear_extrude(wheel_width-2*rim_wall)
+        difference() {
+            difference() {
+                intersection() {
+                    circle(r=inner_r+rim_wall+cavity_radial_width);
+                    offset(delta=-rim_wall) tread_outline();
+                }
+                circle(r=inner_r+rim_wall);
+            }
+            for(a=[0:360/cavity_rib_count:359]) rotate(a)
+                translate([inner_r+rim_wall-1,-cavity_rib_width/2])
+                    square([cavity_radial_width+2,cavity_rib_width]);
+        }
+}
+
 module solid_rim() {
     linear_extrude(wheel_width) difference() {
         tread_outline();
         circle(r=inner_r);
     }
 }
-module tread_cavity() {
-    translate([0,0,rim_wall]) linear_extrude(wheel_width-2*rim_wall)
-        difference() {
-            offset(delta=-rim_wall) tread_outline();
-            circle(r=inner_r+rim_wall);
-        }
-}
+
 module sealed_rim() {
     difference() {
         solid_rim();
-
+        tread_cavity();
     }
 }
 
