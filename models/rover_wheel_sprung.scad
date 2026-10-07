@@ -1,4 +1,5 @@
-// Concept assembly from the updated sketch. Units: mm.
+// All-terrain paddle-wheel concept based on the updated sketch. Units: mm.
+// Enlarged sealed tread region, shortened springs, and deeper solid lugs.
 // Spring, bearing, pin, and clearances are illustrative, not hardware specifications.
 // Springs show compliance; this model does not simulate forces or damping.
 
@@ -9,19 +10,19 @@ hub_diameter = 34;
 axle_hole_diameter = 6;
 lug_count = 8;
 spoke_count = 6;
-lug_height = 8;
-rim_inner_diameter = 88;
+lug_height = 14;
+rim_inner_diameter = 64;
 
 /* [Sealed tread cavity] */
 // Thick skins, narrow chambers, solid teeth, and bridges between chambers.
 rim_wall = 3;
-cavity_radial_width = 2;
+cavity_radial_width = 6;
 cavity_rib_width = 2;
 cavity_rib_count = 8;
 
 /* [Springs] */
-spring_turns = 7;
-spring_coil_diameter = 6;
+spring_turns = 3;
+spring_coil_diameter = 4.5;
 spring_wire_diameter = 0.8;
 
 /* [Display] */
@@ -35,7 +36,8 @@ root_r = outer_r-lug_height;
 inner_r = rim_inner_diameter/2;
 hub_r = hub_diameter/2;
 zmid = wheel_width/2;
-spring_start = hub_r+9;
+sleeve_length = 6;
+spring_start = hub_r+sleeve_length;
 spring_end = inner_r-4;
 pivot_r = inner_r-1;
 spring_length = spring_end-spring_start;
@@ -114,8 +116,8 @@ module radial_cylinder(start,length,radius) {
 module spring_spoke() {
     // Hub-side sleeve and exposed piston rod.
     color("#5f7486") translate([hub_r-1,-2.5,zmid-4])
-        cube([10,5,8]);
-    color("#b8c3cc") radial_cylinder(hub_r+7,inner_r-hub_r-9,1.1);
+        cube([sleeve_length+1,5,8]);
+    color("#b8c3cc") radial_cylinder(hub_r+sleeve_length-2,inner_r-hub_r-sleeve_length,1.1);
     // End seats for the spring.
     color("#93a8b9") {
         radial_cylinder(spring_start-0.6,1.2,spring_coil_diameter/2+0.7);
