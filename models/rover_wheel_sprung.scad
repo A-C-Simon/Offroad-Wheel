@@ -1,16 +1,18 @@
 // All-terrain paddle-wheel concept based on the updated sketch. Units: mm.
-// Enlarged sealed tread region, shortened springs, and deeper solid lugs.
+// Enlarged sealed tread region, swept paddles, smaller hub, longer springs.
 // Spring, bearing, pin, and clearances are illustrative, not hardware specifications.
 // Springs show compliance; this model does not simulate forces or damping.
 
 /* [Wheel] */
 outside_diameter = 120;
 wheel_width = 30;
-hub_diameter = 34;
+hub_diameter = 24;
 axle_hole_diameter = 6;
 lug_count = 8;
 spoke_count = 6;
 lug_height = 14;
+// Position of the paddle tip within each pitch; larger values sweep it back.
+lug_sweep = 0.78;
 rim_inner_diameter = 64;
 
 /* [Sealed tread cavity] */
@@ -21,8 +23,8 @@ cavity_rib_width = 2;
 cavity_rib_count = 8;
 
 /* [Springs] */
-spring_turns = 3;
-spring_coil_diameter = 4.5;
+spring_turns = 5;
+spring_coil_diameter = 5;
 spring_wire_diameter = 0.8;
 
 /* [Display] */
@@ -47,12 +49,29 @@ assert(wheel_width > 2*rim_wall);
 assert(rim_wall > 0 && cavity_radial_width > 0 && cavity_rib_width > 0);
 assert(spring_length > spring_wire_diameter*spring_turns);
 assert(wheel_width > 16 && hub_r > axle_hole_diameter/2);
+assert(lug_sweep >= 0.5 && lug_sweep <= 0.85);
 
 function polar(r,a) = [r*cos(a),r*sin(a)];
+function bezier(p0,p1,p2,p3,t) =
+    (1-t)*(1-t)*(1-t)*p0 + 3*(1-t)*(1-t)*t*p1
+    + 3*(1-t)*t*t*p2 + t*t*t*p3;
+
+// Gradual curved rise, circumferentially swept tip, and short trailing flank.
+// The paddles remain distinct, rather than smoothing into a circular tread.
 module tread_outline() {
-    polygon([for(i=[0:lug_count-1]) each
-        [polar(root_r,i*360/lug_count),
-         polar(outer_r,(i+0.16)*360/lug_count)]]);
+    pitch = 360/lug_count;
+    polygon([for(i=[0:lug_count-1]) let(a=i*pitch) each concat(
+        [for(j=[0:16]) bezier(
+            polar(root_r,a),
+            polar(root_r+1,a+0.25*pitch),
+            polar(outer_r-2,a+(lug_sweep-0.20)*pitch),
+            polar(outer_r,a+lug_sweep*pitch),j/16)],
+        [for(j=[1:9]) bezier(
+            polar(outer_r,a+lug_sweep*pitch),
+            polar(outer_r-5,a+(lug_sweep+0.04)*pitch),
+            polar(root_r+1,a+0.98*pitch),
+            polar(root_r,a+pitch),j/10)]
+    )]);
 }
 
 // The cavity is entirely enclosed. Radial bridges create separate chambers.
