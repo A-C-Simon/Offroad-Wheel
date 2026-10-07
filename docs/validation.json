@@ -1,0 +1,96 @@
+{
+  "exports/offroad_wheel.stl": {
+    "triangles": 33224,
+    "closed": true,
+    "surface_components": 9,
+    "volume_cm3": 204.289,
+    "bounds_mm": [
+      [
+        -59.8556,
+        59.8556
+      ],
+      [
+        -59.8556,
+        59.8556
+      ],
+      [
+        0.0,
+        30.0
+      ]
+    ],
+    "maximum_radius_mm": 59.9999,
+    "sha256": "417aa1c777656163f8c7a21e8468a1d1c4c13ce91f72534cd54d76d1ad709b99"
+  },
+  "exports/sealed_air_chambers.stl": {
+    "triangles": 544,
+    "closed": true,
+    "surface_components": 8,
+    "volume_cm3": 32.0224,
+    "bounds_mm": [
+      [
+        -40.9509,
+        40.9509
+      ],
+      [
+        -40.9509,
+        40.9509
+      ],
+      [
+        3.0,
+        27.0
+      ]
+    ],
+    "maximum_radius_mm": 41.0,
+    "sha256": "51070e0ee285411c0e6c091bbc699b8dc9831b20e54e115820b8418083ecc72c"
+  },
+  "exports/tread_ring.stl": {
+    "triangles": 6992,
+    "closed": true,
+    "surface_components": 9,
+    "volume_cm3": 188.3284,
+    "bounds_mm": [
+      [
+        -59.8556,
+        59.8556
+      ],
+      [
+        -59.8556,
+        59.8556
+      ],
+      [
+        0.0,
+        30.0
+      ]
+    ],
+    "maximum_radius_mm": 59.9999,
+    "sha256": "aed4ca48b667c677dc6b46a251231b785bb885cdc4f172e3cea93c37e956743a"
+  },
+  "archive/zigzag_wheel/rover_wheel.stl": {
+    "triangles": 1344,
+    "closed": true,
+    "surface_components": 1,
+    "volume_cm3": 220.9435,
+    "bounds_mm": [
+      [
+        -59.7896,
+        59.7896
+      ],
+      [
+        -59.7896,
+        59.7896
+      ],
+      [
+        0.0,
+        30.0
+      ]
+    ],
+    "maximum_radius_mm": 60.0,
+    "sha256": "3c7b49d2d62e0d1084efcd52f80db3282e890ae127d6a7b9209e969a5975e6a7"
+  },
+  "tread_ring_summary": {
+    "enclosed_air_cm3": 32.0224,
+    "solid_material_cm3": 188.3284,
+    "hollow_volume_percent": 14.53
+  },
+  "model_sha256": "474c0e1d42a7b76f833d726f4a644403a818a562b1b7b53cabbe9939766925a4"
+}
