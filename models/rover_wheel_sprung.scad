@@ -1,5 +1,5 @@
 // All-terrain paddle-wheel concept based on the updated sketch. Units: mm.
-// Enlarged sealed tread region, swept paddles, smaller hub, longer springs.
+// Broad circular tread region, shallow swept teeth, smaller hub, longer springs.
 // Spring, bearing, pin, and clearances are illustrative, not hardware specifications.
 // Springs show compliance; this model does not simulate forces or damping.
 
@@ -8,11 +8,11 @@ outside_diameter = 120;
 wheel_width = 30;
 hub_diameter = 24;
 axle_hole_diameter = 6;
-lug_count = 8;
+lug_count = 12;
 spoke_count = 6;
-lug_height = 14;
+lug_height = 6;
 // Position of the paddle tip within each pitch; larger values sweep it back.
-lug_sweep = 0.78;
+lug_sweep = 0.82;
 rim_inner_diameter = 64;
 
 /* [Sealed tread cavity] */
