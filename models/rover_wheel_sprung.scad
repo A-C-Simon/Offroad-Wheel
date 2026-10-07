@@ -68,10 +68,30 @@ function bezier(p0,p1,p2,p3,t) =
 
 // Main peaks stay fixed. Smaller counter-swept teeth sit on the long flanks.
 function tooth_tip(i) = polar(outer_r,(i+lug_sweep)*360/lug_count);
+// Circular contact arc, tangent to the wheel circumference at the main tip.
+function arc_to_tip(start,tip,t) = let(
+    tip_r=norm(tip), unit=tip/tip_r,
+    center=unit*((tip_r*tip_r-start*start)/(2*(tip_r-start*unit))),
+    radius=norm(tip-center),
+    start_a=atan2(start[1]-center[1],start[0]-center[0]),
+    end_a=atan2(tip[1]-center[1],tip[0]-center[0]),
+    sweep=(end_a-start_a+360)%360)
+    center+polar(radius,start_a+sweep*t);
 function main_flank(i,t) = let(a=(i+lug_sweep)*360/lug_count)
-    bezier(polar(root_r,a-short_flank_backstep),
-        polar(outer_r-1,a+0.14*360/lug_count),
-        polar(outer_r,a+0.74*360/lug_count),tooth_tip(i+1),t);
+    arc_to_tip(polar(root_r,a-short_flank_backstep),tooth_tip(i+1),t);
+
+// True circular arc through three points for the small reverse tooth's crown.
+function arc_through(start,middle,end,t) = let(
+    u=middle-start, v=end-start,
+    du=middle*middle-start*start, dv=end*end-start*start,
+    det=2*(u[0]*v[1]-u[1]*v[0]),
+    center=[(du*v[1]-dv*u[1])/det,(u[0]*dv-v[0]*du)/det],
+    radius=norm(start-center),
+    a0=atan2(start[1]-center[1],start[0]-center[0]),
+    a1=atan2(end[1]-center[1],end[0]-center[0]),
+    sweep=(a1-a0+360)%360)
+    center+polar(radius,a0+sweep*t);
+
 function point_angle(p) = atan2(p[1],p[0]);
 function paired_tooth_points(i) = let(
     t=reverse_tooth_position,
@@ -84,7 +104,10 @@ function paired_tooth_points(i) = let(
     // Opposite lean: this root lies ahead of the reverse tip, rather than behind.
     reverse_foot=polar(base_r-1,base_a+1.6),
     entry=main_flank(i,t-0.22),
-    exit=main_flank(i,t+0.34))
+    exit=main_flank(i,t+0.34),
+    return_sweep=(point_angle(exit)-reverse_a+360)%360,
+    crown=polar(min(outer_r-0.15,max(reverse_r,norm(exit))+0.15),
+                reverse_a+return_sweep/2))
     concat(
         [tooth_tip(i),main_flank(i,0)],
         [for(j=[1:6]) main_flank(i,(t-0.22)*j/6)],
@@ -93,9 +116,7 @@ function paired_tooth_points(i) = let(
             polar(base_r-1.4,base_a+0.7),reverse_foot,j/7)],
         [reverse_tip],
         // Long return follows the circumference and curves gently inward.
-        [for(j=[1:12]) bezier(reverse_tip,
-            polar(reverse_r-0.5,reverse_a+6),
-            main_flank(i,t+0.26),exit,j/12)],
+        [for(j=[1:24]) arc_through(reverse_tip,crown,exit,j/24)],
         [for(j=[1:4]) main_flank(i,(t+0.34)+(1-t-0.34)*j/5)]
     );
 module tread_outline() {
