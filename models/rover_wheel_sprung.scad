@@ -10,7 +10,7 @@ hub_diameter = 24;
 axle_hole_diameter = 6;
 lug_count = 12;
 spoke_count = 6;
-lug_height = 8;
+lug_height = 11;
 // Position of the paddle tip within each pitch; larger values sweep it back.
 lug_sweep = 0.82;
 rim_inner_diameter = 64;
