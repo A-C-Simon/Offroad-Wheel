@@ -1,5 +1,5 @@
 // All-terrain paddle-wheel concept based on the updated sketch. Units: mm.
-// Fixed forward peaks with smaller opposing teeth on each long flank.
+// Sharp forward/reverse peaks, circular contact arcs, and rounded inward valleys.
 // Spring, bearing, pin, and clearances are illustrative, not hardware specifications.
 // Springs show compliance; this model does not simulate forces or damping.
 
@@ -22,6 +22,11 @@ reverse_teeth = true;
 reverse_tooth_height = 3;
 // Location along each main tooth's long flank.
 reverse_tooth_position = 0.52;
+
+/* [Tooth fillets] */
+// Larger inward fillets remove the narrow dirt-catching valleys.
+valley_fillet_radius = 2;
+tip_fillet_radius = 0.8;
 
 /* [Sealed tread cavity] */
 // Thick skins, narrow chambers, solid teeth, and bridges between chambers.
@@ -59,6 +64,7 @@ assert(spring_length > spring_wire_diameter*spring_turns);
 assert(wheel_width > 16 && hub_r > axle_hole_diameter/2);
 assert(lug_sweep >= 0.5 && lug_sweep <= 0.85);
 assert(reverse_tooth_height > 0);
+assert(valley_fillet_radius > 0);
 assert(reverse_tooth_position >= 0.4 && reverse_tooth_position <= 0.6);
 
 function polar(r,a) = [r*cos(a),r*sin(a)];
@@ -66,7 +72,7 @@ function bezier(p0,p1,p2,p3,t) =
     (1-t)*(1-t)*(1-t)*p0 + 3*(1-t)*(1-t)*t*p1
     + 3*(1-t)*t*t*p2 + t*t*t*p3;
 
-// Main peaks stay fixed. Smaller counter-swept teeth sit on the long flanks.
+// Sharp peaks define the envelope; only inward valleys receive fillets.
 function tooth_tip(i) = polar(outer_r,(i+lug_sweep)*360/lug_count);
 // Circular contact arc, tangent to the wheel circumference at the main tip.
 function arc_to_tip(start,tip,t) = let(
@@ -119,11 +125,21 @@ function paired_tooth_points(i) = let(
         [for(j=[1:24]) arc_through(reverse_tip,crown,exit,j/24)],
         [for(j=[1:4]) main_flank(i,(t+0.34)+(1-t-0.34)*j/5)]
     );
-module tread_outline() {
+module raw_tread_outline() {
     polygon([for(i=[0:lug_count-1]) each
         (reverse_teeth ? paired_tooth_points(i) :
             concat([tooth_tip(i)],
                 [for(j=[0:19]) main_flank(i,j/20)]))]);
+}
+
+// Round only concave valleys. This dilation/erosion fills inward corners
+// while preserving sharp convex peaks on the forward and reverse teeth.
+module tread_outline() {
+    offset(r=tip_fillet_radius,$fn=48)
+        offset(r=-tip_fillet_radius,$fn=48)
+    offset(r=-valley_fillet_radius,$fn=48)
+        offset(r=valley_fillet_radius,$fn=48)
+            raw_tread_outline();
 }
 
 // The cavity is entirely enclosed. Radial bridges create separate chambers.
