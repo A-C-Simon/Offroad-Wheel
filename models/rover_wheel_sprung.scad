@@ -70,9 +70,7 @@ module tread_cavity() {
 module sealed_rim() {
     difference() {
         solid_rim();
-        tread_cavity();
-        if(rim_cutaway) translate([0,0,wheel_width-rim_wall-0.1])
-            cube([outside_diameter,outside_diameter,rim_wall+1]);
+
     }
 }
 
