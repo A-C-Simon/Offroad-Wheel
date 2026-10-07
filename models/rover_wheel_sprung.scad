@@ -26,7 +26,6 @@ reverse_tooth_position = 0.52;
 /* [Tooth fillets] */
 // Larger inward fillets remove the narrow dirt-catching valleys.
 valley_fillet_radius = 2;
-tip_fillet_radius = 0.8;
 
 /* [Sealed tread cavity] */
 // Thick skins, narrow chambers, solid teeth, and bridges between chambers.
@@ -135,8 +134,6 @@ module raw_tread_outline() {
 // Round only concave valleys. This dilation/erosion fills inward corners
 // while preserving sharp convex peaks on the forward and reverse teeth.
 module tread_outline() {
-    offset(r=tip_fillet_radius,$fn=48)
-        offset(r=-tip_fillet_radius,$fn=48)
     offset(r=-valley_fillet_radius,$fn=48)
         offset(r=valley_fillet_radius,$fn=48)
             raw_tread_outline();
